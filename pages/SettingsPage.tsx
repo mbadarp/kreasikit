@@ -86,19 +86,36 @@ const SettingsPage: React.FC = () => {
                 )}
 
                 {config.provider === 'groq' && (
-                    <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-100 dark:border-orange-800 animate-fade-in">
-                        <Input
-                            label="Groq API Key"
-                            name="groqApiKey"
-                            type="password"
-                            placeholder="gsk_..."
-                            value={config.groqApiKey || ''}
-                            onChange={handleKeyChange}
-                            helperText="Dapatkan key di console.groq.com"
-                        />
-                        <p className="text-xs text-orange-600 dark:text-orange-300 mt-2">
-                            <strong>Peringatan:</strong> Groq sangat cepat untuk teks, tetapi <strong>TIDAK BISA</strong> membuat gambar (Thumbnail Generator). Fitur thumbnail akan tetap menggunakan Gemini (App Default) atau error.
-                        </p>
+                    <div className="space-y-4 animate-fade-in">
+                        <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-100 dark:border-orange-800">
+                            <Input
+                                label="Groq API Key (Untuk Teks)"
+                                name="groqApiKey"
+                                type="password"
+                                placeholder="gsk_..."
+                                value={config.groqApiKey || ''}
+                                onChange={handleKeyChange}
+                                helperText="Dapatkan key di console.groq.com"
+                            />
+                            <p className="text-xs text-orange-600 dark:text-orange-300 mt-2">
+                                <strong>Info:</strong> Groq sangat cepat untuk teks (Script, Ide, Hook, dll).
+                            </p>
+                        </div>
+                        
+                        <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-700">
+                             <Input
+                                label="Gemini API Key (Opsional: Fallback untuk Gambar)"
+                                name="geminiApiKey"
+                                type="password"
+                                placeholder="AIzaSy..."
+                                value={config.geminiApiKey || ''}
+                                onChange={handleKeyChange}
+                                helperText="Diperlukan karena Groq TIDAK BISA membuat gambar (Thumbnail)."
+                            />
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                Jika kosong, Thumbnail Generator akan mencoba menggunakan kuota Gratis Aplikasi (mungkin terbatas).
+                            </p>
+                        </div>
                     </div>
                 )}
 

@@ -14,10 +14,13 @@ const getApiConfig = (): ApiConfig => {
 };
 
 const getEffectiveGeminiKey = (config: ApiConfig): string => {
-    if (config.provider === 'gemini' && config.geminiApiKey) {
+    // 1. Jika User secara eksplisit memasukkan Gemini Key, prioritaskan itu.
+    //    Ini berlaku jika provider='gemini' ATAU provider='groq' (karena Groq butuh fallback ke Gemini untuk gambar).
+    if (config.geminiApiKey && (config.provider === 'gemini' || config.provider === 'groq')) {
         return config.geminiApiKey;
     }
-    // Fallback to app key if provider is 'app' OR if provider is 'groq' (for image fallback) OR if custom key is missing
+    
+    // 2. Fallback ke App Default Key
     // CHANGE: Adjusted for Vite environment variables
     return import.meta.env.VITE_API_KEY || '';
 };
@@ -622,20 +625,14 @@ const generateSingleThumbnail = async (ai: GoogleGenAI, formState: ThumbnailForm
 export const generateThumbnails = async (formState: ThumbnailFormState): Promise<ThumbnailGenerationResult> => {
     const config = getApiConfig();
 
-    // WARNING: Groq does not support Image Generation. Force fallback or Error.
-    if (config.provider === 'groq') {
-        // Option 1: Error out
-        // throw new Error("Groq API tidak mendukung pembuatan gambar. Harap ubah ke 'App API' atau 'Gemini API' di Pengaturan.");
-        
-        // Option 2: Fallback silently to App Key/Gemini logic (User Experience is better)
-        console.warn("Groq selected but does not support images. Falling back to Gemini logic.");
-    }
+    // WARNING: Groq does not support Image Generation.
+    // Logic: We will attempt to use Gemini Key (Custom) OR App Key (Default).
+    // getEffectiveGeminiKey handles this fallback logic now.
 
-    // Always use Gemini logic for thumbnails
-    const apiKey = getEffectiveGeminiKey(config); // This handles 'app' and 'gemini' cases, and 'groq' case falls back to app key.
+    const apiKey = getEffectiveGeminiKey(config); 
     
     if (!apiKey) {
-         throw new Error("API Key Gemini diperlukan untuk membuat thumbnail (Groq tidak mendukung gambar). Harap atur di Pengaturan.");
+         throw new Error("API Key Gemini diperlukan untuk membuat thumbnail (Groq tidak mendukung gambar). Harap atur 'Gemini API Key' di halaman Pengaturan.");
     }
 
     const ai = new GoogleGenAI({ apiKey });
@@ -660,12 +657,14 @@ export const generateThumbnails = async (formState: ThumbnailFormState): Promise
         const validImages = results.filter((img): img is string => img !== null);
 
         if (validImages.length === 0) {
-            throw new Error("Gagal menghasilkan semua gambar thumbnail.");
+            throw new Error("Tidak ada gambar yang berhasil dibuat. Periksa kuota API atau koneksi Anda.");
         }
 
         return { images: validImages };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Gagal thumbnail:", error);
-        throw new Error("Gagal generate thumbnail. Pastikan API Key valid.");
+        // Tampilkan pesan error asli dari Google/Network untuk debugging user
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Gagal generate thumbnail: ${message}`);
     }
 };
