@@ -37,7 +37,7 @@ const callGroqApi = async (messages: any[], apiKey: string, jsonMode: boolean = 
             },
             body: JSON.stringify({
                 messages: messages,
-                model: 'llama3-70b-8192',
+                model: 'llama-3.3-70b-versatile',
                 temperature: 0.7,
                 response_format: jsonMode ? { type: "json_object" } : undefined
             })
