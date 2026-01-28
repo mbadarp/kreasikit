@@ -1,6 +1,4 @@
 
-import { ReactNode } from 'react';
-
 export type Industry = 'finance' | 'beauty' | 'education' | 'gaming' | 'fnb' | 'property' | 'automotive' | 'health' | 'parenting' | 'travel' | 'tech' | 'fashion' | 'b2b_saas' | 'others';
 export type Platform = 'tiktok' | 'instagram_reels' | 'youtube_shorts' | 'youtube_long' | 'x' | 'linkedin' | 'podcast' | 'blog' | 'newsletter' | 'others';
 export type ContentFormat = 'tutorial' | 'debunking' | 'storytelling' | 'case_study' | 'review' | 'before_after' | 'qna' | 'listicle' | 'reaction' | 'skit' | 'carousel' | 'thread' | 'others';
