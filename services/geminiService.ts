@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, Type, HarmCategory, HarmBlockThreshold } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import { GenerateFormState, Idea, GeminiResponse, IdeaScores, HookGenerateFormState, HookGenerationResult, ScriptFormState, GeneratedScript, ScriptFormula, PromptFormState, YoutubeOptimizerFormState, YoutubeOptimizerResult, GeminiYoutubeResponse, ThumbnailFormState, ThumbnailGenerationResult, ApiConfig } from '../types';
 
 // --- CONFIGURATION HELPER ---
