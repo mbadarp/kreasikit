@@ -199,12 +199,11 @@ export interface ThumbnailGenerationResult {
 
 // --- API CONFIGURATION TYPES ---
 
-export type ApiProvider = 'app' | 'gemini' | 'groq';
+export type ApiProvider = 'app' | 'gemini';
 
 export interface ApiConfig {
     provider: ApiProvider;
     geminiApiKey?: string;
-    groqApiKey?: string;
 }
 
 // --- AUTH TYPES ---

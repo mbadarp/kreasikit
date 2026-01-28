@@ -12,8 +12,7 @@ import { SettingsIcon } from '../components/icons/SettingsIcon';
 const SettingsPage: React.FC = () => {
     const [config, setConfig] = useLocalStorage<ApiConfig>('kreasikit_api_config', {
         provider: 'app',
-        geminiApiKey: '',
-        groqApiKey: ''
+        geminiApiKey: ''
     });
 
     const handleProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -30,13 +29,8 @@ const SettingsPage: React.FC = () => {
             toast.error("API Key Gemini wajib diisi jika memilih provider Gemini.");
             return;
         }
-        if (config.provider === 'groq' && !config.groqApiKey) {
-            toast.error("API Key Groq wajib diisi jika memilih provider Groq.");
-            return;
-        }
 
         // Trigger save to local storage (handled by hook, but we can simulate a save action UI)
-        // Note: useLocalStorage updates immediately, but we add a toast for feedback.
         toast.success("Pengaturan API berhasil disimpan!");
     };
 
@@ -60,8 +54,7 @@ const SettingsPage: React.FC = () => {
                         value={config.provider}
                         options={[
                             { value: 'app', label: 'App API (Default - Gratis)' },
-                            { value: 'gemini', label: 'Google Gemini API (Key Pribadi)' },
-                            { value: 'groq', label: 'Groq AI (Key Pribadi - Sangat Cepat)' }
+                            { value: 'gemini', label: 'Google Gemini API (Key Pribadi)' }
                         ]}
                         onChange={handleProviderChange}
                         helperText="Jika 'App API' sering gagal karena limit, gunakan 'Gemini API' dengan key Anda sendiri."
@@ -85,40 +78,6 @@ const SettingsPage: React.FC = () => {
                     </div>
                 )}
 
-                {config.provider === 'groq' && (
-                    <div className="space-y-4 animate-fade-in">
-                        <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-100 dark:border-orange-800">
-                            <Input
-                                label="Groq API Key (Untuk Teks)"
-                                name="groqApiKey"
-                                type="password"
-                                placeholder="gsk_..."
-                                value={config.groqApiKey || ''}
-                                onChange={handleKeyChange}
-                                helperText="Dapatkan key di console.groq.com"
-                            />
-                            <p className="text-xs text-orange-600 dark:text-orange-300 mt-2">
-                                <strong>Info:</strong> Groq sangat cepat untuk teks (Script, Ide, Hook, dll).
-                            </p>
-                        </div>
-                        
-                        <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-700">
-                             <Input
-                                label="Gemini API Key (Opsional: Fallback untuk Gambar)"
-                                name="geminiApiKey"
-                                type="password"
-                                placeholder="AIzaSy..."
-                                value={config.geminiApiKey || ''}
-                                onChange={handleKeyChange}
-                                helperText="Diperlukan karena Groq TIDAK BISA membuat gambar (Thumbnail)."
-                            />
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                                Jika kosong, Thumbnail Generator akan mencoba menggunakan kuota Gratis Aplikasi (mungkin terbatas).
-                            </p>
-                        </div>
-                    </div>
-                )}
-
                 <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
                     <Button onClick={handleSave}>
                         Simpan Pengaturan
@@ -130,7 +89,7 @@ const SettingsPage: React.FC = () => {
                 <h3 className="font-bold mb-2 text-gray-900 dark:text-white">Info Privasi:</h3>
                 <ul className="list-disc list-inside space-y-1">
                     <li>API Key Anda disimpan secara lokal di browser (Local Storage).</li>
-                    <li>Key tidak pernah dikirim ke server kami, melainkan langsung ke Google/Groq.</li>
+                    <li>Key tidak pernah dikirim ke server kami, melainkan langsung ke Google.</li>
                     <li>Jika Anda menghapus cache browser, pengaturan ini akan hilang.</li>
                 </ul>
             </div>

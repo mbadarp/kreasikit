@@ -7,53 +7,20 @@ import { GenerateFormState, Idea, GeminiResponse, IdeaScores, HookGenerateFormSt
 const getApiConfig = (): ApiConfig => {
     try {
         const stored = localStorage.getItem('kreasikit_api_config');
-        return stored ? JSON.parse(stored) : { provider: 'app', geminiApiKey: '', groqApiKey: '' };
+        return stored ? JSON.parse(stored) : { provider: 'app', geminiApiKey: '' };
     } catch {
-        return { provider: 'app', geminiApiKey: '', groqApiKey: '' };
+        return { provider: 'app', geminiApiKey: '' };
     }
 };
 
-const getEffectiveGeminiKey = (config: ApiConfig): string => {
-    // 1. Jika User secara eksplisit memasukkan Gemini Key, prioritaskan itu.
-    //    Ini berlaku jika provider='gemini' ATAU provider='groq' (karena Groq butuh fallback ke Gemini untuk gambar).
-    if (config.geminiApiKey && (config.provider === 'gemini' || config.provider === 'groq')) {
+const getEffectiveApiKey = (config: ApiConfig): string => {
+    // 1. Jika User secara eksplisit memasukkan Gemini Key dan memilih provider 'gemini', gunakan itu.
+    if (config.provider === 'gemini' && config.geminiApiKey) {
         return config.geminiApiKey;
     }
     
-    // 2. Fallback ke App Default Key
-    // CHANGE: Adjusted for Vite environment variables
+    // 2. Fallback ke App Default Key (dari environment variable)
     return import.meta.env.VITE_API_KEY || '';
-};
-
-// --- GROQ API CLIENT ADAPTER ---
-
-const callGroqApi = async (messages: any[], apiKey: string, jsonMode: boolean = false): Promise<string> => {
-    try {
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                messages: messages,
-                model: 'llama-3.3-70b-versatile',
-                temperature: 0.7,
-                response_format: jsonMode ? { type: "json_object" } : undefined
-            })
-        });
-
-        if (!response.ok) {
-            const err = await response.json();
-            throw new Error(`Groq API Error: ${err.error?.message || response.statusText}`);
-        }
-
-        const data = await response.json();
-        return data.choices[0]?.message?.content || '';
-    } catch (error) {
-        console.error("Groq Call Failed:", error);
-        throw error;
-    }
 };
 
 // --- SCORING HELPER ---
@@ -151,50 +118,37 @@ Kembalikan JSON valid yang ketat sesuai dengan skema output. Tanpa markdown, tan
 
 export const generateIdeas = async (formState: GenerateFormState): Promise<Idea[]> => {
     const config = getApiConfig();
+    const apiKey = getEffectiveApiKey(config);
+    if (!apiKey) throw new Error("API Key Gemini tidak ditemukan.");
+
+    const ai = new GoogleGenAI({ apiKey });
     const userPrompt = buildUserPrompt(formState);
     let responseText = "";
     
-    // GROQ PATH
-    if (config.provider === 'groq' && config.groqApiKey) {
-        const messages = [
-            { role: 'system', content: systemInstruction + " Return valid JSON matching the expected schema with 'ideas' array." },
-            { role: 'user', content: userPrompt }
-        ];
-        responseText = await callGroqApi(messages, config.groqApiKey, true);
-    } 
-    // GEMINI PATH (App Default or Custom Key)
-    else {
-        const apiKey = getEffectiveGeminiKey(config);
-        if (!apiKey) throw new Error("API Key Gemini tidak ditemukan.");
-
-        const ai = new GoogleGenAI({ apiKey });
-        
-        // Retry logic for Gemini
-        let lastError: any = null;
-        for (let i = 0; i < 3; i++) {
-            try {
-                const result = await ai.models.generateContent({
-                    model: 'gemini-3-flash-preview',
-                    contents: userPrompt,
-                    config: {
-                        systemInstruction: i > 0 
-                            ? `${systemInstruction}\n\nPERCOBAAN SEBELUMNYA GAGAL. Kembalikan HANYA JSON yang valid sesuai skema.`
-                            : systemInstruction,
-                        responseMimeType: 'application/json',
-                        responseSchema: responseSchema,
-                    }
-                });
-                responseText = result.text || "";
-                break; // Success
-            } catch (error) {
-                console.error(`Percobaan ${i + 1} gagal:`, error);
-                lastError = error;
-            }
+    // Retry logic for Gemini
+    let lastError: any = null;
+    for (let i = 0; i < 3; i++) {
+        try {
+            const result = await ai.models.generateContent({
+                model: 'gemini-3-flash-preview',
+                contents: userPrompt,
+                config: {
+                    systemInstruction: i > 0 
+                        ? `${systemInstruction}\n\nPERCOBAAN SEBELUMNYA GAGAL. Kembalikan HANYA JSON yang valid sesuai skema.`
+                        : systemInstruction,
+                    responseMimeType: 'application/json',
+                    responseSchema: responseSchema,
+                }
+            });
+            responseText = result.text || "";
+            break; // Success
+        } catch (error) {
+            console.error(`Percobaan ${i + 1} gagal:`, error);
+            lastError = error;
         }
-        if (!responseText) throw new Error(`Gagal menghasilkan ide dengan Gemini. ${lastError?.message || ''}`);
     }
+    if (!responseText) throw new Error(`Gagal menghasilkan ide dengan Gemini. ${lastError?.message || ''}`);
 
-    // Process Response (Common for both)
     try {
         const parsedJson: GeminiResponse = JSON.parse(responseText.trim());
         if (!parsedJson.ideas || !Array.isArray(parsedJson.ideas)) {
@@ -237,19 +191,15 @@ const buildScriptPrompt = (formState: GenerateFormState, idea: Idea): string => 
 
 export const generateScriptForIdea = async (formState: GenerateFormState, idea: Idea): Promise<string> => {
     const config = getApiConfig();
+    const apiKey = getEffectiveApiKey(config);
+    const ai = new GoogleGenAI({ apiKey });
     const userPrompt = buildScriptPrompt(formState, idea);
 
-    if (config.provider === 'groq' && config.groqApiKey) {
-        return callGroqApi([{ role: 'user', content: userPrompt }], config.groqApiKey, false);
-    } else {
-        const apiKey = getEffectiveGeminiKey(config);
-        const ai = new GoogleGenAI({ apiKey });
-        const result = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: userPrompt,
-        });
-        return result.text ?? '';
-    }
+    const result = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: userPrompt,
+    });
+    return result.text ?? '';
 };
 
 // --- HOOK GENERATOR ---
@@ -290,29 +240,21 @@ const buildHookPrompt = (formState: HookGenerateFormState): string => {
 
 export const generateHooks = async (formState: HookGenerateFormState): Promise<HookGenerationResult> => {
     const config = getApiConfig();
+    const apiKey = getEffectiveApiKey(config);
+    const ai = new GoogleGenAI({ apiKey });
     const userPrompt = buildHookPrompt(formState);
-    let responseText = "";
 
-    if (config.provider === 'groq' && config.groqApiKey) {
-        const messages = [
-            { role: 'system', content: hookSystemInstruction + " Return valid JSON output matching schema: {hooks: [{framework: string, visual_hook: string, voice_over_hook: string}, ...]}" },
-            { role: 'user', content: userPrompt }
-        ];
-        responseText = await callGroqApi(messages, config.groqApiKey, true);
-    } else {
-        const apiKey = getEffectiveGeminiKey(config);
-        const ai = new GoogleGenAI({ apiKey });
-        const result = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: userPrompt,
-            config: {
-                systemInstruction: hookSystemInstruction,
-                responseMimeType: 'application/json',
-                responseSchema: hookResponseSchema,
-            }
-        });
-        responseText = result.text || "";
-    }
+    const result = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: userPrompt,
+        config: {
+            systemInstruction: hookSystemInstruction,
+            responseMimeType: 'application/json',
+            responseSchema: hookResponseSchema,
+        }
+    });
+    
+    const responseText = result.text || "";
 
     try {
         const parsedJson = JSON.parse(responseText.trim());
@@ -379,9 +321,11 @@ const scriptFromFormulaSchema = {
 
 export const generateScriptFromFormula = async (formState: ScriptFormState, revisionTweak?: string): Promise<GeneratedScript> => {
     const config = getApiConfig();
+    const apiKey = getEffectiveApiKey(config);
+    const ai = new GoogleGenAI({ apiKey });
+    
     const formulaInst = getFormulaInstructions(formState.formula);
 
-    // BASE SYSTEM INSTRUCTION (CREATIVE FOCUS)
     const baseSystemInstruction = `You are a Script Generator Expert and a HOOK OPTIMIZER (storytelling and copywriting expert).
 
     **YOUR PRIMARY JOB IS HOOK OPTIMIZATION:**
@@ -422,41 +366,18 @@ export const generateScriptFromFormula = async (formState: ScriptFormState, revi
         userPrompt += `\n\nPERINTAH REVISI KHUSUS: ${revisionTweak}. Mohon sesuaikan skrip sebelumnya dengan instruksi revisi ini tanpa merusak struktur formula.`;
     }
 
-    let responseText = "";
-
-    if (config.provider === 'groq' && config.groqApiKey) {
-        // --- GROQ SPECIFIC LOGIC ---
-        // Groq needs the schema in the prompt to work correctly.
-        const schemaString = JSON.stringify(scriptFromFormulaSchema, null, 2);
-        const groqSystemInstruction = `${baseSystemInstruction}
-        
-        **OUTPUT REQUIREMENT:**
-        Return VALID JSON only. The JSON must match the following structure exactly:
-        ${schemaString}`;
-
-        const messages = [
-            { role: 'system', content: groqSystemInstruction },
-            { role: 'user', content: userPrompt }
-        ];
-        responseText = await callGroqApi(messages, config.groqApiKey, true);
-    } else {
-        // --- GEMINI SPECIFIC LOGIC ---
-        // Gemini uses native responseSchema, so we keep the text prompt clean to prioritize creativity.
-        const apiKey = getEffectiveGeminiKey(config);
-        const ai = new GoogleGenAI({ apiKey });
-        
-        const result = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: userPrompt,
-            config: {
-                systemInstruction: baseSystemInstruction, // No JSON noise here
-                responseMimeType: 'application/json',
-                responseSchema: scriptFromFormulaSchema, // Strict enforcement via config
-                thinkingConfig: { thinkingBudget: 4000 }
-            }
-        });
-        responseText = result.text || "";
-    }
+    const result = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: userPrompt,
+        config: {
+            systemInstruction: baseSystemInstruction,
+            responseMimeType: 'application/json',
+            responseSchema: scriptFromFormulaSchema,
+            thinkingConfig: { thinkingBudget: 4000 }
+        }
+    });
+    
+    const responseText = result.text || "";
 
     try {
         const json = JSON.parse(responseText.trim());
@@ -482,23 +403,17 @@ const promptGeneratorSystemInstruction = `You are an Expert Prompt Generator. St
 
 export const generateDetailedPrompt = async (formState: PromptFormState): Promise<string> => {
     const config = getApiConfig();
+    const apiKey = getEffectiveApiKey(config);
+    const ai = new GoogleGenAI({ apiKey });
+    
     const content = `Generate prompt for: "${formState.userInput}"`;
 
-    if (config.provider === 'groq' && config.groqApiKey) {
-        return callGroqApi([
-            { role: 'system', content: promptGeneratorSystemInstruction },
-            { role: 'user', content: content }
-        ], config.groqApiKey, false);
-    } else {
-        const apiKey = getEffectiveGeminiKey(config);
-        const ai = new GoogleGenAI({ apiKey });
-        const result = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: content,
-            config: { systemInstruction: promptGeneratorSystemInstruction }
-        });
-        return result.text ?? '';
-    }
+    const result = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: content,
+        config: { systemInstruction: promptGeneratorSystemInstruction }
+    });
+    return result.text ?? '';
 };
 
 // --- YOUTUBE OPTIMIZER ---
@@ -544,29 +459,22 @@ const youtubeOptimizerSchema = {
 
 export const generateYoutubeOptimization = async (formState: YoutubeOptimizerFormState): Promise<YoutubeOptimizerResult> => {
     const config = getApiConfig();
+    const apiKey = getEffectiveApiKey(config);
+    const ai = new GoogleGenAI({ apiKey });
+    
     const prompt = `Content: ${formState.contentInput}\nLanguage: ${formState.outputLanguage}`;
-    let responseText = "";
 
-    if (config.provider === 'groq' && config.groqApiKey) {
-        const messages = [
-            { role: 'system', content: youtubeOptimizerSystemInstruction + " Return Valid JSON." },
-            { role: 'user', content: prompt }
-        ];
-        responseText = await callGroqApi(messages, config.groqApiKey, true);
-    } else {
-        const apiKey = getEffectiveGeminiKey(config);
-        const ai = new GoogleGenAI({ apiKey });
-        const result = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: prompt,
-            config: {
-                systemInstruction: youtubeOptimizerSystemInstruction,
-                responseMimeType: 'application/json',
-                responseSchema: youtubeOptimizerSchema,
-            }
-        });
-        responseText = result.text || "";
-    }
+    const result = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: {
+            systemInstruction: youtubeOptimizerSystemInstruction,
+            responseMimeType: 'application/json',
+            responseSchema: youtubeOptimizerSchema,
+        }
+    });
+    
+    const responseText = result.text || "";
 
     try {
         const parsedJson: GeminiYoutubeResponse = JSON.parse(responseText.trim());
@@ -678,15 +586,9 @@ const generateSingleThumbnail = async (ai: GoogleGenAI, formState: ThumbnailForm
 
 export const generateThumbnails = async (formState: ThumbnailFormState): Promise<ThumbnailGenerationResult> => {
     const config = getApiConfig();
-
-    // WARNING: Groq does not support Image Generation.
-    // Logic: We will attempt to use Gemini Key (Custom) OR App Key (Default).
-    // getEffectiveGeminiKey handles this fallback logic now.
-
-    const apiKey = getEffectiveGeminiKey(config); 
-    
+    const apiKey = getEffectiveApiKey(config);
     if (!apiKey) {
-         throw new Error("API Key Gemini diperlukan untuk membuat thumbnail (Groq tidak mendukung gambar). Harap atur 'Gemini API Key' di halaman Pengaturan.");
+         throw new Error("API Key tidak ditemukan.");
     }
 
     const ai = new GoogleGenAI({ apiKey });
