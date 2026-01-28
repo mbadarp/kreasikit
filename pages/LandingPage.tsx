@@ -39,15 +39,15 @@ const LandingPage: React.FC = () => {
                     </div>
                     <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto text-left">
                         <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                            <h3 className="text-lg font-semibold">Generator Ide Cerdas</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Generator Ide Cerdas</h3>
                             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Dapatkan ide super spesifik yang menjawab masalah audiens Anda, bukan cuma topik umum.</p>
                         </div>
                          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                            <h3 className="text-lg font-semibold">Penulis Skrip Otomatis</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Penulis Skrip Otomatis</h3>
                             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Ubah ide menjadi skrip video atau artikel lengkap dengan satu klik. Hemat waktu riset dan penulisan.</p>
                         </div>
                          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                            <h3 className="text-lg font-semibold">Analisis & Skor</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Analisis & Skor</h3>
                             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Setiap ide diberi skor potensi agar Anda bisa fokus pada konten yang paling menjanjikan.</p>
                         </div>
                     </div>

@@ -169,7 +169,7 @@ const HookGeneratorPage: React.FC = () => {
     return (
         <div className="max-w-4xl mx-auto space-y-8 pb-10">
             <div className="text-center">
-                <h1 className="text-3xl font-bold">Hook Generator Pro</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Hook Generator Pro</h1>
                 <p className="mt-2 text-gray-600 dark:text-gray-400">Hasilkan 12 jenis hook psikologis untuk menghentikan scroll audiens Anda.</p>
             </div>
 
@@ -179,7 +179,7 @@ const HookGeneratorPage: React.FC = () => {
                         <label htmlFor="script" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deskripsi Konten / Script (Wajib)</label>
                         <textarea
                             id="script" name="script" rows={6}
-                            className="block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                            className="block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm text-gray-900 dark:text-white"
                             placeholder="Contoh: Video ini akan menjelaskan 3 kesalahan umum saat public speaking dan cara mengatasinya."
                             value={formState.script} onChange={handleChange}
                         />
@@ -211,7 +211,7 @@ const HookGeneratorPage: React.FC = () => {
                 <div className="space-y-6">
                     <Card>
                         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
-                            <h2 className="text-2xl font-bold">Hasil Generate</h2>
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Hasil Generate</h2>
                             <Button size="sm" variant="secondary" onClick={downloadAllHooksAsDoc}>
                                 <DownloadIcon className="w-4 h-4 mr-2" />
                                 Download Semua Hook

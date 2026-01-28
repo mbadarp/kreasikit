@@ -46,7 +46,7 @@ const PromptGeneratorPage: React.FC = () => {
     return (
         <div className="max-w-4xl mx-auto space-y-8 pb-10">
             <div className="text-center">
-                <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
+                <h1 className="text-3xl font-bold flex items-center justify-center gap-2 text-gray-900 dark:text-white">
                     <TerminalIcon className="w-8 h-8 text-primary-600" />
                     Prompt Generator
                 </h1>
@@ -64,7 +64,7 @@ const PromptGeneratorPage: React.FC = () => {
                         <textarea
                             id="userInput"
                             rows={4}
-                            className="block w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 text-base"
+                            className="block w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 text-base text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                             placeholder="Contoh: Saya butuh prompt untuk menganalisis laporan keuangan perusahaan startup dan memberikan insight investasi."
                             value={formState.userInput}
                             onChange={(e) => setFormState({ userInput: e.target.value })}

@@ -43,7 +43,7 @@ const SettingsPage: React.FC = () => {
     return (
         <div className="max-w-3xl mx-auto space-y-8">
             <div className="text-center">
-                <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
+                <h1 className="text-3xl font-bold flex items-center justify-center gap-2 text-gray-900 dark:text-white">
                     <SettingsIcon className="w-8 h-8 text-gray-700 dark:text-gray-300" />
                     Pengaturan API
                 </h1>
@@ -110,7 +110,7 @@ const SettingsPage: React.FC = () => {
             </Card>
 
             <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-sm text-gray-600 dark:text-gray-400">
-                <h3 className="font-bold mb-2">Info Privasi:</h3>
+                <h3 className="font-bold mb-2 text-gray-900 dark:text-white">Info Privasi:</h3>
                 <ul className="list-disc list-inside space-y-1">
                     <li>API Key Anda disimpan secara lokal di browser (Local Storage).</li>
                     <li>Key tidak pernah dikirim ke server kami, melainkan langsung ke Google/Groq.</li>

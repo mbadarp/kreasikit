@@ -205,8 +205,8 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ ideaRequests }) => {
                 </div>
             ) : (
                 <div className="text-center py-16">
-                    <h3 className="text-xl font-semibold">Ide Tidak Ditemukan</h3>
-                    <p className="mt-2 text-gray-500">Filter yang Anda pilih mungkin terlalu spesifik. Coba ubah pengaturan filter atau hasilkan ide baru.</p>
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Ide Tidak Ditemukan</h3>
+                    <p className="mt-2 text-gray-500 dark:text-gray-400">Filter yang Anda pilih mungkin terlalu spesifik. Coba ubah pengaturan filter atau hasilkan ide baru.</p>
                     <Link to="/app/idea-generator" className="mt-4 inline-block">
                         <Button>Hasilkan Ide Baru</Button>
                     </Link>

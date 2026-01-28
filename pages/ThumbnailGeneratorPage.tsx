@@ -78,7 +78,7 @@ const ThumbnailGeneratorPage: React.FC = () => {
     return (
         <div className="max-w-5xl mx-auto space-y-8 pb-10">
             <div className="text-center">
-                <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
+                <h1 className="text-3xl font-bold flex items-center justify-center gap-2 text-gray-900 dark:text-white">
                     <ImageIcon className="w-8 h-8 text-indigo-600" />
                     Thumbnail Generator Pro
                 </h1>
@@ -124,7 +124,7 @@ const ThumbnailGeneratorPage: React.FC = () => {
                         <textarea
                             name="description"
                             rows={4}
-                            className="block w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base"
+                            className="block w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                             placeholder="Jelaskan suasana, objek utama, latar belakang, dan ekspresi yang diinginkan..."
                             value={formState.description}
                             onChange={handleChange}
@@ -153,7 +153,7 @@ const ThumbnailGeneratorPage: React.FC = () => {
                                 type="file" 
                                 accept="image/*"
                                 onChange={handleImageUpload}
-                                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                             />
                         ) : (
                             <div className="flex items-center gap-4">
@@ -165,7 +165,7 @@ const ThumbnailGeneratorPage: React.FC = () => {
                                 <span className="text-sm text-green-600 font-medium">Foto berhasil diunggah. AI akan menggunakan wajah ini.</span>
                             </div>
                         )}
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                             Upload foto selfie atau karakter untuk dimasukkan ke dalam thumbnail. (Max 5MB)
                         </p>
                     </div>

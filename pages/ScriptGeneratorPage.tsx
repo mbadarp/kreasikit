@@ -105,7 +105,7 @@ ${generatedScript.delivery_notes}
                 <Card>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div className="md:col-span-2 lg:col-span-3">
-                            <h2 className="text-xl font-semibold mb-3">1. Tentukan Pondasi Script</h2>
+                            <h2 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">1. Tentukan Pondasi Script</h2>
                         </div>
                         <div>
                             <Select 
@@ -130,17 +130,17 @@ ${generatedScript.delivery_notes}
                 <Card>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <h2 className="text-xl font-semibold mb-3">2. Isi Materi Konten</h2>
+                            <h2 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">2. Isi Materi Konten</h2>
                             <div className="space-y-4">
                                 <Input label="Target Audiens" name="audience" value={formState.audience} onChange={handleChange} placeholder="cth: Ibu bekerja usia 25-35..." helperText="Jelaskan siapa yang Anda ajak bicara."/>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Topik & Poin Penting</label>
-                                    <textarea name="topic_and_points" value={formState.topic_and_points} onChange={handleChange} rows={5} className="block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" placeholder="Topik: Cara konsisten bikin konten&#10;Poin:&#10;- Susah mulai&#10;- Takut jelek&#10;- Tidak punya sistem"/>
+                                    <textarea name="topic_and_points" value={formState.topic_and_points} onChange={handleChange} rows={5} className="block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" placeholder="Topik: Cara konsisten bikin konten&#10;Poin:&#10;- Susah mulai&#10;- Takut jelek&#10;- Tidak punya sistem"/>
                                 </div>
                             </div>
                         </div>
                          <div>
-                            <h2 className="text-xl font-semibold mb-3">3. Atur Gaya & Penawaran</h2>
+                            <h2 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">3. Atur Gaya & Penawaran</h2>
                             <div className="space-y-4">
                                 <Select label="Kesadaran Audiens" name="awareness" value={formState.awareness} options={AUDIENCE_AWARENESS_LEVELS} onChange={handleChange} />
                                 <Input label="Gaya & Persona" name="style_and_persona" value={formState.style_and_persona} onChange={handleChange} placeholder="cth: Santai - Mentor" />
@@ -162,12 +162,12 @@ ${generatedScript.delivery_notes}
                 {/* Kiri: Riwayat */}
                 <div className="lg:col-span-2">
                     <Card>
-                        <h3 className="text-lg font-semibold mb-3 flex items-center"><HistoryIcon className="w-5 h-5 mr-2" /> Riwayat (10 Terakhir)</h3>
+                        <h3 className="text-lg font-semibold mb-3 flex items-center text-gray-900 dark:text-white"><HistoryIcon className="w-5 h-5 mr-2" /> Riwayat (10 Terakhir)</h3>
                         {scriptHistory.length > 0 ? (
                             <ul className="space-y-2 max-h-96 overflow-y-auto pr-2">
                             {scriptHistory.map(item => (
                                 <li key={item.id} className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer" onClick={() => loadFromHistory(item)}>
-                                    <p className="font-semibold truncate">{item.title}</p>
+                                    <p className="font-semibold truncate text-gray-900 dark:text-gray-200">{item.title}</p>
                                     <p className="text-xs text-gray-500">{item.formula} - {new Date(item.date).toLocaleString()}</p>
                                 </li>
                             ))}
@@ -182,7 +182,7 @@ ${generatedScript.delivery_notes}
                         <Card>
                             <div className="flex justify-between items-start mb-4">
                                 <div>
-                                    <h2 className="text-2xl font-bold">{generatedScript.title}</h2>
+                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{generatedScript.title}</h2>
                                     <p className="text-sm text-gray-500">Formula: {formState.formula}</p>
                                 </div>
                                 <Button onClick={copyScriptToClipboard} variant="secondary">
@@ -193,7 +193,7 @@ ${generatedScript.delivery_notes}
                             <div className="space-y-4">
                                 <div>
                                     <h3 className="font-semibold text-primary-600">Hook Utama</h3>
-                                    <p className="mt-1 pl-4 border-l-4 border-primary-200 text-lg font-medium">{generatedScript.hook}</p>
+                                    <p className="mt-1 pl-4 border-l-4 border-primary-200 text-lg font-medium text-gray-800 dark:text-gray-200">{generatedScript.hook}</p>
                                 </div>
                                 
                                 {/* Menampilkan Variasi Hook jika ada */}
@@ -222,15 +222,15 @@ ${generatedScript.delivery_notes}
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-green-600">Call to Action</h3>
-                                    <p className="mt-1 pl-4 border-l-4 border-green-200">{generatedScript.cta}</p>
+                                    <p className="mt-1 pl-4 border-l-4 border-green-200 text-gray-600 dark:text-gray-300">{generatedScript.cta}</p>
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-yellow-600">Catatan Delivery</h3>
-                                    <p className="mt-1 pl-4 border-l-4 border-yellow-200">{generatedScript.delivery_notes}</p>
+                                    <p className="mt-1 pl-4 border-l-4 border-yellow-200 text-gray-600 dark:text-gray-300">{generatedScript.delivery_notes}</p>
                                 </div>
                             </div>
                             <div className="mt-6 pt-4 border-t dark:border-gray-700">
-                                <h3 className="text-sm font-semibold mb-2">Revisi Cepat</h3>
+                                <h3 className="text-sm font-semibold mb-2 text-gray-900 dark:text-gray-300">Revisi Cepat</h3>
                                 <div className="flex flex-wrap gap-2">
                                     <Button size="sm" variant="secondary" onClick={() => handleQuickEdit('lebih lucu')} disabled={isRevisionLoading}>Lebih Lucu</Button>
                                     <Button size="sm" variant="secondary" onClick={() => handleQuickEdit('lebih singkat')} disabled={isRevisionLoading}>Lebih Singkat</Button>

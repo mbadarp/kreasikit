@@ -53,12 +53,12 @@ const GeneratePage: React.FC<GeneratePageProps> = ({ onIdeasGenerated }) => {
             <form onSubmit={handleSubmit}>
                 <div className="space-y-8">
                     <div className="text-center mb-8">
-                        <h1 className="text-3xl font-bold">Generator Ide Konten</h1>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Generator Ide Konten</h1>
                         <p className="mt-2 text-gray-600 dark:text-gray-400">Isi detail di bawah ini untuk mendapatkan ide super spesifik dari AI.</p>
                     </div>
 
                     <Card>
-                        <h2 className="text-xl font-semibold mb-4 border-b pb-2 dark:border-gray-700">Konteks Utama</h2>
+                        <h2 className="text-xl font-semibold mb-4 border-b pb-2 dark:border-gray-700 text-gray-900 dark:text-white">Konteks Utama</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                <Select label="Industri / Niche" name="industry" value={formState.industry} options={INDUSTRIES} onChange={handleChange} />
@@ -83,7 +83,7 @@ const GeneratePage: React.FC<GeneratePageProps> = ({ onIdeasGenerated }) => {
                     </Card>
 
                     <Card>
-                        <h2 className="text-xl font-semibold mb-4 border-b pb-2 dark:border-gray-700">Detail Audiens</h2>
+                        <h2 className="text-xl font-semibold mb-4 border-b pb-2 dark:border-gray-700 text-gray-900 dark:text-white">Detail Audiens</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Input label="Segmen Audiens" name="audience_segment" value={formState.audience_segment} onChange={handleChange} placeholder="cth: Pemilik anjing pemula" required />
                             <Select label="Level Audiens" name="audience_level" value={formState.audience_level} options={AUDIENCE_LEVELS} onChange={handleChange} />
@@ -93,7 +93,7 @@ const GeneratePage: React.FC<GeneratePageProps> = ({ onIdeasGenerated }) => {
                     </Card>
                     
                     <Card>
-                        <h2 className="text-xl font-semibold mb-4 border-b pb-2 dark:border-gray-700">Strategi Konten</h2>
+                        <h2 className="text-xl font-semibold mb-4 border-b pb-2 dark:border-gray-700 text-gray-900 dark:text-white">Strategi Konten</h2>
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                              <Select label="Tingkat Kedalaman" name="depth_level" value={formState.depth_level} options={DEPTH_LEVELS} onChange={handleChange} />
                              <TagInput label="Topik Blacklist" tags={formState.blacklist_topics} setTags={(tags) => setFormState(p => ({...p, blacklist_topics: tags}))} placeholder="Tambah topik yang dihindari..." />
@@ -101,7 +101,7 @@ const GeneratePage: React.FC<GeneratePageProps> = ({ onIdeasGenerated }) => {
                     </Card>
 
                     <Card>
-                        <h2 className="text-xl font-semibold mb-4 border-b pb-2 dark:border-gray-700">Pengaturan Generator</h2>
+                        <h2 className="text-xl font-semibold mb-4 border-b pb-2 dark:border-gray-700 text-gray-900 dark:text-white">Pengaturan Generator</h2>
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                             <Select label="Jumlah Ide" name="idea_count" value={String(formState.idea_count)} options={[{value: '10', label: '10'}, {value: '20', label: '20'}, {value: '50', label: '50'}]} onChange={e => setFormState(p => ({...p, idea_count: Number(e.target.value)}))} />
                             <Select label="Risiko / Variasi" name="risk_level" value={formState.risk_level} options={RISK_LEVELS} onChange={handleChange} />

@@ -96,7 +96,7 @@ ${results.tags}
     return (
         <div className="max-w-4xl mx-auto space-y-8 pb-10">
             <div className="text-center">
-                <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
+                <h1 className="text-3xl font-bold flex items-center justify-center gap-2 text-gray-900 dark:text-white">
                     <YoutubeIcon className="w-8 h-8 text-red-600" />
                     YouTube Optimizer
                 </h1>
@@ -115,7 +115,7 @@ ${results.tags}
                             id="contentInput"
                             name="contentInput"
                             rows={8}
-                            className="block w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 text-base"
+                            className="block w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 text-base text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                             placeholder="Tempelkan ide konten, skrip video, atau artikel referensi Anda di sini..."
                             value={formState.contentInput}
                             onChange={handleChange}
@@ -215,7 +215,7 @@ ${results.tags}
                          <textarea
                             readOnly
                             rows={5}
-                            className="block w-full px-3 py-2 bg-gray-100 dark:bg-gray-900 border-gray-300 dark:border-gray-600 rounded-md text-sm font-mono"
+                            className="block w-full px-3 py-2 bg-gray-100 dark:bg-gray-900 border-gray-300 dark:border-gray-600 rounded-md text-sm font-mono text-gray-900 dark:text-white"
                             value={results.tags}
                         />
                         <p className="text-xs text-right mt-1 text-gray-500">{results.tags.length} / 500 karakter</p>
