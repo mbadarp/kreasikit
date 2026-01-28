@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI, Type, HarmCategory, HarmBlockThreshold } from '@google/genai';
 import { GenerateFormState, Idea, GeminiResponse, IdeaScores, HookGenerateFormState, HookGenerationResult, ScriptFormState, GeneratedScript, ScriptFormula, PromptFormState, YoutubeOptimizerFormState, YoutubeOptimizerResult, GeminiYoutubeResponse, ThumbnailFormState, ThumbnailGenerationResult, ApiConfig } from '../types';
 
 // --- CONFIGURATION HELPER ---
@@ -575,20 +575,36 @@ export const generateYoutubeOptimization = async (formState: YoutubeOptimizerFor
 
 // --- THUMBNAIL GENERATOR SERVICE ---
 
+// Helper to get fallback model
+const generateSingleThumbnailImagen = async (ai: GoogleGenAI, formState: ThumbnailFormState, variationPrompt: string, aspectRatio: string): Promise<string> => {
+    const style = formState.style === 'others' ? formState.style_other : formState.style;
+    const cleanPrompt = `YouTube thumbnail, ${formState.orientation}, ${style} style. ${formState.description}. ${variationPrompt}. ${formState.include_text ? `Text: "${formState.description.substring(0, 20)}..."` : ""}. High quality, 4k.`;
+    
+    // Fallback to Imagen 3.0 via generateImages
+    const response = await ai.models.generateImages({
+        model: 'imagen-3.0-generate-001',
+        prompt: cleanPrompt,
+        config: {
+            numberOfImages: 1,
+            aspectRatio: aspectRatio === '9:16' ? '9:16' : '16:9',
+        }
+    });
+
+    const b64 = response.generatedImages?.[0]?.image?.imageBytes;
+    if (b64) {
+        return `data:image/jpeg;base64,${b64}`;
+    }
+    throw new Error("Imagen failed to generate image bytes.");
+}
+
 // Helper function to generate a single image variation
 const generateSingleThumbnail = async (ai: GoogleGenAI, formState: ThumbnailFormState, variationPrompt: string, aspectRatio: string): Promise<string> => {
     const style = formState.style === 'others' ? formState.style_other : formState.style;
     const resolutionText = formState.orientation === 'vertical' ? '1080x1920' : '1280x720';
 
-    let prompt = `Create a high-quality YouTube thumbnail. 
-    Format: ${formState.orientation}. 
-    Aspect Ratio: ${aspectRatio}.
-    Target Resolution: ${resolutionText}.
-    Style: ${style}. 
-    Description: ${formState.description}. 
-    ${formState.include_text ? `Include text (Language: ${formState.language}) that matches the vibe.` : "No text."}
-    Variation: ${variationPrompt}.
-    Make it high contrast, click-worthy, and professional.`;
+    // Simplified prompt for Gemini Flash Image to reduce rejection
+    // Removed "Create a..." and chatty instructions.
+    let prompt = `YouTube thumbnail, ${formState.orientation}, ${aspectRatio} aspect ratio, ${resolutionText}. Style: ${style}. Content: ${formState.description}. ${variationPrompt}. ${formState.include_text ? `Includes text in ${formState.language}` : "No text"}. High contrast, professional.`;
 
     const contents: any[] = [];
     
@@ -600,26 +616,45 @@ const generateSingleThumbnail = async (ai: GoogleGenAI, formState: ThumbnailForm
                 data: base64Data
             }
         });
-        prompt += " IMPORTANT: Use the person/character in the attached image as the main subject of the thumbnail. Maintain their likeness.";
+        prompt += " Subject: match the person in the attached image.";
     }
 
     contents.push({ text: prompt });
 
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: { parts: contents },
-        config: {
-            imageConfig: { aspectRatio: aspectRatio }
-        }
-    });
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image',
+            contents: { parts: contents },
+            config: {
+                imageConfig: { aspectRatio: aspectRatio },
+                // Add safety settings to reduce false positives
+                safetySettings: [
+                    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE }
+                ]
+            }
+        });
 
-    for (const part of response.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) {
-            return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        for (const part of response.candidates?.[0]?.content?.parts || []) {
+            if (part.inlineData) {
+                return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+            }
         }
+        
+        // If we get here, no image was found, check for text (refusal)
+        const textPart = response.candidates?.[0]?.content?.parts?.find(p => p.text);
+        if (textPart?.text) {
+             throw new Error(`Model Refusal: ${textPart.text}`);
+        }
+    } catch (error) {
+        console.warn("Gemini Flash Image failed, trying Imagen fallback...", error);
+        // Fallback to Imagen if the primary model fails
+        return await generateSingleThumbnailImagen(ai, formState, variationPrompt, aspectRatio);
     }
     
-    throw new Error("No image generated in response.");
+    throw new Error("No image generated.");
 };
 
 export const generateThumbnails = async (formState: ThumbnailFormState): Promise<ThumbnailGenerationResult> => {
@@ -639,9 +674,9 @@ export const generateThumbnails = async (formState: ThumbnailFormState): Promise
 
     const aspectRatio = formState.orientation === 'vertical' ? '9:16' : '16:9';
     const variations = [
-        "Focus on a close-up, highly emotional expression or focal point.",
-        "Focus on an action shot or dynamic composition with strong movement.",
-        "Focus on a high-contrast, artistic or minimalist composition."
+        "Close-up emotional expression",
+        "Action shot dynamic composition",
+        "High-contrast minimalist"
     ];
 
     try {
@@ -657,7 +692,7 @@ export const generateThumbnails = async (formState: ThumbnailFormState): Promise
         const validImages = results.filter((img): img is string => img !== null);
 
         if (validImages.length === 0) {
-            throw new Error("Tidak ada gambar yang berhasil dibuat. Periksa kuota API atau koneksi Anda.");
+            throw new Error("Tidak ada gambar yang berhasil dibuat. Kemungkinan prompt ditolak oleh filter keamanan atau model sedang sibuk.");
         }
 
         return { images: validImages };
