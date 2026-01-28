@@ -380,8 +380,9 @@ const scriptFromFormulaSchema = {
 export const generateScriptFromFormula = async (formState: ScriptFormState, revisionTweak?: string): Promise<GeneratedScript> => {
     const config = getApiConfig();
     const formulaInst = getFormulaInstructions(formState.formula);
-    
-    const scriptSystemInstruction = `You are a Script Generator Expert and a HOOK OPTIMIZER (storytelling and copywriting expert).
+
+    // BASE SYSTEM INSTRUCTION (CREATIVE FOCUS)
+    const baseSystemInstruction = `You are a Script Generator Expert and a HOOK OPTIMIZER (storytelling and copywriting expert).
 
     **YOUR PRIMARY JOB IS HOOK OPTIMIZATION:**
     Saat menerima input untuk script, kamu harus menganalisa dan mengoptimasi bagian "HOOK" secara agresif sehingga:
@@ -399,9 +400,7 @@ export const generateScriptFromFormula = async (formState: ScriptFormState, revi
     - Ensure CTA connects personally with the product/solution.
 
     **BRAINSTORMING STEP:**
-    Analyze the topic, audience, goal, and formula. Determine the most effective psychological triggers for the HOOKS. Then construct the full script around these powerful openers.
-
-    Return valid JSON strictly matching the schema.`;
+    Analyze the topic, audience, goal, and formula. Determine the most effective psychological triggers for the HOOKS. Then construct the full script around these powerful openers.`;
 
     let userPrompt = `
     DOKUMEN INPUT GENERATOR:
@@ -426,23 +425,33 @@ export const generateScriptFromFormula = async (formState: ScriptFormState, revi
     let responseText = "";
 
     if (config.provider === 'groq' && config.groqApiKey) {
+        // --- GROQ SPECIFIC LOGIC ---
+        // Groq needs the schema in the prompt to work correctly.
+        const schemaString = JSON.stringify(scriptFromFormulaSchema, null, 2);
+        const groqSystemInstruction = `${baseSystemInstruction}
+        
+        **OUTPUT REQUIREMENT:**
+        Return VALID JSON only. The JSON must match the following structure exactly:
+        ${schemaString}`;
+
         const messages = [
-            { role: 'system', content: scriptSystemInstruction + " Return Valid JSON strictly matching the schema." },
+            { role: 'system', content: groqSystemInstruction },
             { role: 'user', content: userPrompt }
         ];
         responseText = await callGroqApi(messages, config.groqApiKey, true);
     } else {
+        // --- GEMINI SPECIFIC LOGIC ---
+        // Gemini uses native responseSchema, so we keep the text prompt clean to prioritize creativity.
         const apiKey = getEffectiveGeminiKey(config);
         const ai = new GoogleGenAI({ apiKey });
         
-        // Menggunakan thinking budget untuk Gemini-3 agar "brainstorming" lebih berkualitas
         const result = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: userPrompt,
             config: {
-                systemInstruction: scriptSystemInstruction,
+                systemInstruction: baseSystemInstruction, // No JSON noise here
                 responseMimeType: 'application/json',
-                responseSchema: scriptFromFormulaSchema,
+                responseSchema: scriptFromFormulaSchema, // Strict enforcement via config
                 thinkingConfig: { thinkingBudget: 4000 }
             }
         });
@@ -450,7 +459,17 @@ export const generateScriptFromFormula = async (formState: ScriptFormState, revi
     }
 
     try {
-        return JSON.parse(responseText.trim());
+        const json = JSON.parse(responseText.trim());
+        // Safety check to ensure 'body' exists and is an array
+        if (!json.body || !Array.isArray(json.body)) {
+             // Attempt to recover if body is a string (hallucination fix)
+             if (typeof json.body === 'string') {
+                 json.body = [{ stage: 'Script', content: json.body }];
+             } else {
+                 json.body = []; // Fallback empty array
+             }
+        }
+        return json;
     } catch (error) {
         console.error("Gagal script JSON:", error, "Raw response:", responseText);
         throw new Error("Gagal menghasilkan script. Respons AI tidak valid.");
