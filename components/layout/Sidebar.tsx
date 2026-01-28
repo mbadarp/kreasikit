@@ -7,7 +7,6 @@ import { SparklesIcon } from '../icons/SparklesIcon';
 import { ScriptIcon } from '../icons/ScriptIcon';
 import { TerminalIcon } from '../icons/TerminalIcon';
 import { YoutubeIcon } from '../icons/YoutubeIcon';
-import { ImageIcon } from '../icons/ImageIcon';
 import { SettingsIcon } from '../icons/SettingsIcon';
 import { LogOutIcon } from '../icons/LogOutIcon';
 
