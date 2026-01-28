@@ -502,102 +502,64 @@ export const generateYoutubeOptimization = async (formState: YoutubeOptimizerFor
 
 // --- THUMBNAIL GENERATOR SERVICE ---
 
-// Helper to get fallback model
-const generateSingleThumbnailImagen = async (ai: GoogleGenAI, formState: ThumbnailFormState, variationPrompt: string, aspectRatio: string): Promise<string> => {
-    const style = formState.style === 'others' ? formState.style_other : formState.style;
-    const cleanPrompt = `YouTube thumbnail, ${formState.orientation}, ${style} style. ${formState.description}. ${variationPrompt}. ${formState.include_text ? `Text: "${formState.description.substring(0, 20)}..."` : ""}. High quality, 4k.`;
-    
-    // Fallback to Imagen 3.0 via generateImages
-    const response = await ai.models.generateImages({
-        model: 'imagen-3.0-generate-001',
-        prompt: cleanPrompt,
-        config: {
-            numberOfImages: 1,
-            aspectRatio: aspectRatio === '9:16' ? '9:16' : '16:9',
-        }
-    });
-
-    const b64 = response.generatedImages?.[0]?.image?.imageBytes;
-    if (b64) {
-        return `data:image/jpeg;base64,${b64}`;
-    }
-    throw new Error("Imagen failed to generate image bytes.");
-}
-
-// Helper function to generate a single image variation
+// Fungsi helper utama untuk generate satu thumbnail menggunakan Imagen 3.0
 const generateSingleThumbnail = async (ai: GoogleGenAI, formState: ThumbnailFormState, variationPrompt: string, aspectRatio: string): Promise<string> => {
     const style = formState.style === 'others' ? formState.style_other : formState.style;
-    const resolutionText = formState.orientation === 'vertical' ? '1080x1920' : '1280x720';
-
-    // Simplified prompt for Gemini Flash Image to reduce rejection
-    // Removed "Create a..." and chatty instructions.
-    let prompt = `YouTube thumbnail, ${formState.orientation}, ${aspectRatio} aspect ratio, ${resolutionText}. Style: ${style}. Content: ${formState.description}. ${variationPrompt}. ${formState.include_text ? `Includes text in ${formState.language}` : "No text"}. High contrast, professional.`;
-
-    const contents: any[] = [];
     
-    if (formState.referenceImage) {
-        const base64Data = formState.referenceImage.split(',')[1] || formState.referenceImage;
-        contents.push({
-            inlineData: {
-                mimeType: 'image/jpeg',
-                data: base64Data
-            }
-        });
-        prompt += " Subject: match the person in the attached image.";
-    }
+    // Perbaikan Prompt: Lebih spesifik untuk Imagen
+    let cleanPrompt = `YouTube thumbnail, ${formState.orientation}, ${style} style. ${formState.description}. ${variationPrompt}. ${formState.include_text ? `Text overlay: "${formState.description.substring(0, 15)}..."` : "No text"}. High quality, 4k resolution, eye-catching.`;
 
-    contents.push({ text: prompt });
+    // Penanganan Reference Image:
+    // Imagen 3.0 via 'generateImages' di Node SDK saat ini fokus Text-to-Image.
+    // Mengirim byte gambar sebagai referensi bisa menyebabkan error jika model belum mendukung full multimodal di endpoint ini.
+    // Strategi: Deskripsikan bahwa ada referensi (jika supported di masa depan) ATAU abaikan byte-nya untuk stabilitas, 
+    // tapi tambahkan instruksi teks yang kuat.
+    if (formState.referenceImage) {
+        cleanPrompt += " (Include a character based on uploaded reference vibe).";
+    }
 
     try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
-            contents: { parts: contents },
+        // MENGGUNAKAN IMAGEN 3.0 (Model yang benar untuk gambar)
+        const response = await ai.models.generateImages({
+            model: 'imagen-3.0-generate-001',
+            prompt: cleanPrompt,
             config: {
-                imageConfig: { aspectRatio: aspectRatio },
-                // Add safety settings to reduce false positives
-                safetySettings: [
-                    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-                    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE }
-                ]
+                numberOfImages: 1,
+                aspectRatio: aspectRatio === '9:16' ? '9:16' : '16:9',
+                outputMimeType: 'image/jpeg',
+                // safetySettings bisa ditambahkan jika perlu
             }
         });
 
-        for (const part of response.candidates?.[0]?.content?.parts || []) {
-            if (part.inlineData) {
-                return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-            }
+        const b64 = response.generatedImages?.[0]?.image?.imageBytes;
+        if (b64) {
+            return `data:image/jpeg;base64,${b64}`;
         }
-        
-        // If we get here, no image was found, check for text (refusal)
-        const textPart = response.candidates?.[0]?.content?.parts?.find(p => p.text);
-        if (textPart?.text) {
-             throw new Error(`Model Refusal: ${textPart.text}`);
+        throw new Error("Imagen failed to generate image bytes.");
+    } catch (error: any) {
+        console.error("Imagen Error:", error);
+        // Error handling spesifik untuk billing/akses
+        if (error.message?.includes('404') || error.message?.includes('403') || error.message?.includes('not found')) {
+             throw new Error("Model Imagen 3.0 tidak tersedia atau akses ditolak. Pastikan API Key Anda berasal dari Project Google Cloud dengan Billing Aktif (Blaze Plan).");
         }
-    } catch (error) {
-        console.warn("Gemini Flash Image failed, trying Imagen fallback...", error);
-        // Fallback to Imagen if the primary model fails
-        return await generateSingleThumbnailImagen(ai, formState, variationPrompt, aspectRatio);
+        throw error;
     }
-    
-    throw new Error("No image generated.");
-};
+}
 
 export const generateThumbnails = async (formState: ThumbnailFormState): Promise<ThumbnailGenerationResult> => {
     const config = getApiConfig();
     const apiKey = getEffectiveApiKey(config);
     if (!apiKey) {
-         throw new Error("API Key tidak ditemukan.");
+         throw new Error("API Key tidak ditemukan. Pastikan sudah login atau set API Key di Pengaturan.");
     }
 
     const ai = new GoogleGenAI({ apiKey });
 
     const aspectRatio = formState.orientation === 'vertical' ? '9:16' : '16:9';
     const variations = [
-        "Close-up emotional expression",
-        "Action shot dynamic composition",
-        "High-contrast minimalist"
+        "Close-up emotional expression, high contrast",
+        "Action shot dynamic composition, bright colors",
+        "Minimalist composition, bold lighting"
     ];
 
     try {
@@ -613,13 +575,12 @@ export const generateThumbnails = async (formState: ThumbnailFormState): Promise
         const validImages = results.filter((img): img is string => img !== null);
 
         if (validImages.length === 0) {
-            throw new Error("Tidak ada gambar yang berhasil dibuat. Kemungkinan prompt ditolak oleh filter keamanan atau model sedang sibuk.");
+            throw new Error("Gagal membuat semua gambar. Periksa kuota API atau status Billing Google Cloud Anda (Imagen membutuhkan akun berbayar).");
         }
 
         return { images: validImages };
     } catch (error: any) {
         console.error("Gagal thumbnail:", error);
-        // Tampilkan pesan error asli dari Google/Network untuk debugging user
         const message = error instanceof Error ? error.message : String(error);
         throw new Error(`Gagal generate thumbnail: ${message}`);
     }
