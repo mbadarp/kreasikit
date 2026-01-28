@@ -76,7 +76,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                 </form>
 
                 <div className="mt-4 text-center text-xs text-gray-400">
-                    <p>Dapatkan kode melalui admin.</p>
+                    <p>Dapatkan kode melalui admin</p>
                 </div>
             </div>
         </div>
