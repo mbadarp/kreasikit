@@ -59,13 +59,15 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
                     <ScriptIcon className="w-5 h-5 mr-3" />
                     Script Generator
                 </NavLink>
-                {/* <NavLink 
+                {/* FITUR DI-HIDE SEMENTARA KARENA ISU API GOOGLE IMAGEN
+                <NavLink 
                     to="/app/thumbnail-generator" 
                     className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClasses : inactiveLinkClasses}`}
                 >
                     <ImageIcon className="w-5 h-5 mr-3" />
                     Thumbnail Generator
-                </NavLink> */}
+                </NavLink>
+                */}
                 <NavLink 
                     to="/app/youtube-optimizer" 
                     className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClasses : inactiveLinkClasses}`}
